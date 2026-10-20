@@ -95,6 +95,12 @@
           "microphonePermission": false
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "9f647041-8ea7-43b7-996a-bab82ace5b16"
+      }
+    },
+    "owner": "digital-spark-click"
   }
 }
