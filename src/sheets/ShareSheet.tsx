@@ -9,10 +9,8 @@ import { shareFile } from '../media';
 import { useDiary, useModIcon } from '../store';
 import { C, R } from '../theme';
 
-type Fmt = 'sticker' | 'stories';
-
 // Lembra a última escolha enquanto o app está aberto
-let last = { tpl: 0, ink: 0, fmt: 'sticker' as Fmt, brand: true };
+let last = { tpl: 0, ink: 0, brand: true };
 
 /** Xadrez atrás da prévia, para deixar claro que o fundo é transparente. */
 function Checker({ dark, width, height }: { dark: boolean; width: number; height: number }) {
@@ -38,7 +36,6 @@ export function ShareSheet({ id, onClose }: { id?: string; onClose: () => void }
   const icon = useModIcon();
   const [o, setO] = useState(last);
   const [box, setBox] = useState({ w: 0, h: 0 });
-  const boxW = box.w;
   const [busy, setBusy] = useState(false);
   const shot = useRef<View>(null);
   const set = (p: Partial<typeof o>) => setO((s) => (last = { ...s, ...p }));
@@ -49,9 +46,6 @@ export function ShareSheet({ id, onClose }: { id?: string; onClose: () => void }
 
   const ink = INKS[o.ink].color;
   const Tpl = TEMPLATES[o.tpl].C;
-  const overlay = <Tpl s={s} ink={ink} brand={o.brand} />;
-  // Stories: quadro 9:16 transparente, capturado na escala da tela (~1080 px de largura)
-  const frameW = Math.min(boxW, 360);
 
   const run = async (fn: () => Promise<void>, fail: string) => {
     setBusy(true);
@@ -90,19 +84,11 @@ export function ShareSheet({ id, onClose }: { id?: string; onClose: () => void }
         style={{ borderRadius: R.md, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}
       >
         <Checker dark={!isDarkInk(ink)} width={box.w} height={box.h} />
-        {boxW > 0 ? (
-          o.fmt === 'stories' ? (
-            <View ref={shot} collapsable={false} style={{ width: frameW, height: (frameW * 16) / 9, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: frameW * 0.3 }}>
-              <View style={{ transform: [{ scale: frameW / 380 }] }}>{overlay}</View>
-            </View>
-          ) : (
-            <View style={{ paddingVertical: 28 }}>
-              <View ref={shot} collapsable={false} style={{ padding: 12 }}>
-                {overlay}
-              </View>
-            </View>
-          )
-        ) : null}
+        <View style={{ paddingVertical: 28 }}>
+          <View ref={shot} collapsable={false} style={{ padding: 12 }}>
+            <Tpl s={s} ink={ink} brand={o.brand} />
+          </View>
+        </View>
       </View>
 
       <View style={{ gap: 8 }}>
@@ -122,18 +108,8 @@ export function ShareSheet({ id, onClose }: { id?: string; onClose: () => void }
           ))}
           <Chip label="Mostrar marca" selected={o.brand} onPress={() => set({ brand: !o.brand })} />
         </View>
-      </View>
-
-      <View style={{ gap: 8 }}>
-        <Label>Formato</Label>
-        <View style={{ flexDirection: 'row', gap: 6 }}>
-          <Chip label="Adesivo" selected={o.fmt === 'sticker'} onPress={() => set({ fmt: 'sticker' })} />
-          <Chip label="Stories 9:16" selected={o.fmt === 'stories'} onPress={() => set({ fmt: 'stories' })} />
-        </View>
         <Txt v="bodySmall" color={C.onSurfaceVariant}>
-          {o.fmt === 'sticker'
-            ? 'Só os dados, em PNG transparente. Nos stories, cole como figurinha por cima da sua foto.'
-            : 'Tela inteira transparente, com os dados já posicionados na parte de baixo.'}
+          Só os dados, em PNG transparente. Nos stories, cole como figurinha por cima da sua foto.
         </Txt>
       </View>
 
