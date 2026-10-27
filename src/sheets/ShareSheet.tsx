@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, ScrollView, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { captureRef } from 'react-native-view-shot';
 import Svg, { Defs, Pattern, Rect } from 'react-native-svg';
@@ -15,10 +15,11 @@ type Fmt = 'sticker' | 'stories';
 let last = { tpl: 0, ink: 0, fmt: 'sticker' as Fmt, brand: true };
 
 /** Xadrez atrás da prévia, para deixar claro que o fundo é transparente. */
-function Checker({ dark }: { dark: boolean }) {
+function Checker({ dark, width, height }: { dark: boolean; width: number; height: number }) {
   const [a, b] = dark ? ['#3b3e36', '#30332c'] : ['#f4f4ef', '#e4e5dc'];
+  // Tamanho explícito: com absoluteFill o SVG não acompanha a prévia quando ela cresce
   return (
-    <Svg style={StyleSheet.absoluteFill}>
+    <Svg width={width} height={height} style={{ position: 'absolute', left: 0, top: 0 }}>
       <Defs>
         <Pattern id="ck" width={20} height={20} patternUnits="userSpaceOnUse">
           <Rect width={20} height={20} fill={a} />
@@ -36,7 +37,8 @@ export function ShareSheet({ id, onClose }: { id?: string; onClose: () => void }
   const { data, today, toast } = useDiary();
   const icon = useModIcon();
   const [o, setO] = useState(last);
-  const [boxW, setBoxW] = useState(0);
+  const [box, setBox] = useState({ w: 0, h: 0 });
+  const boxW = box.w;
   const [busy, setBusy] = useState(false);
   const shot = useRef<View>(null);
   const set = (p: Partial<typeof o>) => setO((s) => (last = { ...s, ...p }));
@@ -65,20 +67,29 @@ export function ShareSheet({ id, onClose }: { id?: string; onClose: () => void }
     run(async () => {
       const b64 = await captureRef(shot, { format: 'png', result: 'base64' });
       await Clipboard.setImageAsync(b64);
-      toast('Copiado! Cole por cima da sua foto');
+      // O snackbar fica atrás do modal: fecha antes de avisar
+      onClose();
+      toast('Imagem copiada para a área de transferência');
     }, 'Não foi possível copiar');
   const share = () =>
     run(async () => {
       const uri = await captureRef(shot, { format: 'png', result: 'tmpfile' });
-      await shareFile(uri, 'image/png', w ? 'Compartilhar treino' : 'Compartilhar semana');
+      // O iOS não informa se o usuário concluiu ou cancelou o envio
+      if (await shareFile(uri, 'image/png', w ? 'Compartilhar treino' : 'Compartilhar semana')) {
+        onClose();
+        toast('Compartilhamento finalizado');
+      }
     }, 'Não foi possível compartilhar');
 
   return (
     <View style={{ gap: 16 }}>
       <Txt v="headlineSmall">{w ? 'Compartilhar treino' : 'Compartilhar semana'}</Txt>
 
-      <View onLayout={(e) => setBoxW(e.nativeEvent.layout.width)} style={{ borderRadius: R.md, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
-        <Checker dark={!isDarkInk(ink)} />
+      <View
+        onLayout={(e) => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
+        style={{ borderRadius: R.md, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}
+      >
+        <Checker dark={!isDarkInk(ink)} width={box.w} height={box.h} />
         {boxW > 0 ? (
           o.fmt === 'stories' ? (
             <View ref={shot} collapsable={false} style={{ width: frameW, height: (frameW * 16) / 9, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: frameW * 0.3 }}>
