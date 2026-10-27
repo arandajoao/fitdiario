@@ -91,7 +91,7 @@ export async function shareFile(uri: string, mimeType: string, dialogTitle: stri
     Alert.alert('Compartilhamento indisponível', 'Este aparelho não permite compartilhar arquivos.');
     return false;
   }
-  const UTI = mimeType === 'application/pdf' ? 'com.adobe.pdf' : mimeType === 'text/csv' ? 'public.comma-separated-values-text' : mimeType.startsWith('image/') ? 'public.jpeg' : undefined;
+  const UTI = mimeType === 'application/pdf' ? 'com.adobe.pdf' : mimeType === 'text/csv' ? 'public.comma-separated-values-text' : mimeType === 'image/png' ? 'public.png' : mimeType.startsWith('image/') ? 'public.jpeg' : undefined;
   await Sharing.shareAsync(uri, { mimeType, UTI, dialogTitle });
   return true;
 }

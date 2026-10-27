@@ -33,6 +33,9 @@ CREATE TABLE IF NOT EXISTS health (
 CREATE INDEX IF NOT EXISTS health_date ON health(date);
 `;
 
+/** v3: unidade em que a distância do treino foi informada (o valor continua em km). */
+const SCHEMA_V3 = `ALTER TABLE workouts ADD COLUMN dist_unit TEXT NOT NULL DEFAULT 'km';`;
+
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
 export function getDb() {
@@ -62,6 +65,24 @@ async function openDb() {
   if ((row?.user_version ?? 0) < 2) {
     await db.execAsync(SCHEMA_V2);
     await db.execAsync('PRAGMA user_version = 2');
+  }
+  if ((row?.user_version ?? 0) < 3) {
+    await db.execAsync(SCHEMA_V3);
+    await db.execAsync('PRAGMA user_version = 3');
+  }
+  if ((row?.user_version ?? 0) < 4) {
+    // v4: novas modalidades padrão. Pula as que o usuário já criou com o mesmo nome.
+    await db.withTransactionAsync(async () => {
+      for (const m of DEFAULT_MODS) {
+        await db.runAsync(
+          `INSERT INTO mods (name, icon, dist, fc, position)
+           SELECT ?, ?, ?, ?, (SELECT COALESCE(MAX(position), -1) + 1 FROM mods)
+           WHERE NOT EXISTS (SELECT 1 FROM mods WHERE lower(name) = lower(?))`,
+          [m.name, m.icon, m.dist ? 1 : 0, m.fc ? 1 : 0, m.name],
+        );
+      }
+    });
+    await db.execAsync('PRAGMA user_version = 4');
   }
   return db;
 }
@@ -109,11 +130,11 @@ export async function loadAll(): Promise<Data> {
 
   const workouts: Workout[] = (
     await db.getAllAsync<{
-      id: string; date: string; mod: string; min: number; kcal: number; dist: number | null; fc: number | null;
+      id: string; date: string; mod: string; min: number; kcal: number; dist: number | null; dist_unit: string; fc: number | null;
       intensity: string; obs: string; created_at: number;
     }>('SELECT * FROM workouts ORDER BY date DESC, created_at DESC')
   ).map((r) => ({
-    id: r.id, date: r.date, mod: r.mod, min: r.min, kcal: r.kcal, dist: r.dist, fc: r.fc,
+    id: r.id, date: r.date, mod: r.mod, min: r.min, kcal: r.kcal, dist: r.dist, unit: r.dist_unit === 'm' ? 'm' : 'km', fc: r.fc,
     int: r.intensity as Workout['int'], obs: r.obs, createdAt: r.created_at,
   }));
 
@@ -159,8 +180,15 @@ export async function loadAll(): Promise<Data> {
 export async function insertWorkout(w: Workout) {
   const db = await getDb();
   await db.runAsync(
-    'INSERT INTO workouts (id, date, mod, min, kcal, dist, fc, intensity, obs, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [w.id, w.date, w.mod, w.min, w.kcal, w.dist, w.fc, w.int, w.obs, w.createdAt],
+    'INSERT INTO workouts (id, date, mod, min, kcal, dist, dist_unit, fc, intensity, obs, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    [w.id, w.date, w.mod, w.min, w.kcal, w.dist, w.unit, w.fc, w.int, w.obs, w.createdAt],
+  );
+}
+export async function updateWorkout(w: Workout) {
+  const db = await getDb();
+  await db.runAsync(
+    'UPDATE workouts SET date = ?, mod = ?, min = ?, kcal = ?, dist = ?, dist_unit = ?, fc = ?, intensity = ?, obs = ? WHERE id = ?',
+    [w.date, w.mod, w.min, w.kcal, w.dist, w.unit, w.fc, w.int, w.obs, w.id],
   );
 }
 export async function deleteWorkout(id: string) {

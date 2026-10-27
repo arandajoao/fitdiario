@@ -2,17 +2,32 @@ import React, { useState } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Path, Polyline, Rect, Stop, Text as SvgText } from 'react-native-svg';
 import { buildChart, CHART } from '../logic';
-import { nf } from '../format';
+import { intf, nf } from '../format';
 import { C, F, R } from '../theme';
 import { Workout } from '../types';
 import { card, Icon, Txt } from './ui';
 
-export const workoutMeta = (w: Workout) =>
-  [w.min + ' min', w.dist ? nf(w.dist) + ' km' : null, w.fc ? Math.round(w.fc) + ' bpm' : null, w.int].filter(Boolean).join(' · ');
+export const distLabel = (w: Workout) => (w.dist ? (w.unit === 'm' ? intf(w.dist * 1000) + ' m' : nf(w.dist) + ' km') : null);
 
-export function WorkoutCard({ w, icon, showObs, onLongPress }: { w: Workout; icon: string; showObs?: boolean; onLongPress?: () => void }) {
+export const workoutMeta = (w: Workout) =>
+  [w.min + ' min', distLabel(w), w.fc ? Math.round(w.fc) + ' bpm' : null, w.int].filter(Boolean).join(' · ');
+
+export function WorkoutCard({
+  w,
+  icon,
+  showObs,
+  onPress,
+  onLongPress,
+}: {
+  w: Workout;
+  icon: string;
+  showObs?: boolean;
+  onPress?: () => void;
+  onLongPress?: () => void;
+}) {
   return (
     <Pressable
+      onPress={onPress}
       onLongPress={onLongPress}
       delayLongPress={350}
       style={({ pressed }) => [card, { flexDirection: 'row', gap: 14, padding: 14, alignItems: showObs ? 'flex-start' : 'center', opacity: pressed ? 0.85 : 1 }]}

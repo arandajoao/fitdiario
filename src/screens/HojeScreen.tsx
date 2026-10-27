@@ -17,7 +17,19 @@ export function confirmDeleteWorkout(w: Workout, onConfirm: () => void) {
   ]);
 }
 
-export function HojeScreen({ go, showBody, toggleBody }: { go: (t: Tab) => void; showBody: boolean; toggleBody: () => void }) {
+export function HojeScreen({
+  go,
+  showBody,
+  toggleBody,
+  editWorkout,
+  shareWeek,
+}: {
+  go: (t: Tab) => void;
+  showBody: boolean;
+  toggleBody: () => void;
+  editWorkout: (id: string) => void;
+  shareWeek: () => void;
+}) {
   const { data, today, actions, toast } = useDiary();
   const icon = useModIcon();
   // Círculo do check: quadrado exato (36px, ou menor em telas estreitas)
@@ -56,13 +68,16 @@ export function HojeScreen({ go, showBody, toggleBody }: { go: (t: Tab) => void;
 
       {/* Semana */}
       <View style={{ borderRadius: R.lg, backgroundColor: C.primary, padding: 20, gap: 18 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 32, marginVertical: -4 }}>
           <Txt v="titleSmall" color={C.onPrimary}>
             Esta semana
           </Txt>
-          <Txt v="labelMedium" color={C.primary90}>
-            {week.length} {week.length === 1 ? 'treino' : 'treinos'}
-          </Txt>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Txt v="labelMedium" color={C.primary90}>
+              {week.length} {week.length === 1 ? 'treino' : 'treinos'}
+            </Txt>
+            {week.length ? <IconBtn icon="ios-share" size={32} iconSize={20} color={C.onPrimary} bg="transparent" label="Compartilhar semana" onPress={shareWeek} style={{ marginRight: -6 }} /> : null}
+          </View>
         </View>
         <Grid cols={3}>
           {[
@@ -120,7 +135,7 @@ export function HojeScreen({ go, showBody, toggleBody }: { go: (t: Tab) => void;
         }
       />
       {todayW.map((w) => (
-        <WorkoutCard key={w.id} w={w} icon={icon(w.mod)} onLongPress={() => del(w)} />
+        <WorkoutCard key={w.id} w={w} icon={icon(w.mod)} onPress={() => editWorkout(w.id)} onLongPress={() => del(w)} />
       ))}
       {todayW.length === 0 ? <EmptyBox>Nenhum treino hoje. Toque em + para registrar.</EmptyBox> : null}
 
@@ -142,9 +157,20 @@ export function HojeScreen({ go, showBody, toggleBody }: { go: (t: Tab) => void;
           </Txt>
         ) : null}
         {recent.map((w, i) => (
-          <View
+          <Pressable
             key={w.id}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderTopColor: C.outlineVariant }}
+            onPress={() => editWorkout(w.id)}
+            onLongPress={() => del(w)}
+            delayLongPress={350}
+            style={({ pressed }) => ({
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+              paddingVertical: 10,
+              borderTopWidth: i ? 1 : 0,
+              borderTopColor: C.outlineVariant,
+              opacity: pressed ? 0.6 : 1,
+            })}
           >
             <Icon name={icon(w.mod)} size={22} color={C.primary} />
             <View style={{ flex: 1, minWidth: 0 }}>
@@ -156,7 +182,7 @@ export function HojeScreen({ go, showBody, toggleBody }: { go: (t: Tab) => void;
             <Txt v="labelMedium" color={C.onSurfaceVariant}>
               {w.min} min · {Math.round(w.kcal)} kcal
             </Txt>
-          </View>
+          </Pressable>
         ))}
       </View>
 

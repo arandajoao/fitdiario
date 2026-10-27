@@ -13,7 +13,17 @@ import { confirmDeleteWorkout } from './HojeScreen';
 export const periodLabel = (fl: Filter) =>
   fl.per === 'custom' ? (fl.from ? short(fl.from) : 'início') + ' – ' + (fl.to ? short(fl.to) : 'hoje') : PER[fl.per];
 
-export function TreinosScreen({ flt, setFlt, openFilters }: { flt: Filter; setFlt: (f: Filter) => void; openFilters: () => void }) {
+export function TreinosScreen({
+  flt,
+  setFlt,
+  openFilters,
+  editWorkout,
+}: {
+  flt: Filter;
+  setFlt: (f: Filter) => void;
+  openFilters: () => void;
+  editWorkout: (id: string) => void;
+}) {
   const { data, today, actions, toast } = useDiary();
   const icon = useModIcon();
   const filtered = applyFilter(data.workouts, flt, today);
@@ -132,6 +142,7 @@ export function TreinosScreen({ flt, setFlt, openFilters }: { flt: Filter; setFl
               w={w}
               icon={icon(w.mod)}
               showObs
+              onPress={() => editWorkout(w.id)}
               onLongPress={() =>
                 confirmDeleteWorkout(w, async () => {
                   await actions.deleteWorkout(w.id);
@@ -144,7 +155,7 @@ export function TreinosScreen({ flt, setFlt, openFilters }: { flt: Filter; setFl
       ))}
       {filtered.length ? (
         <Txt v="bodySmall" color={C.outline} style={{ textAlign: 'center' }}>
-          Toque e segure um treino para excluir.
+          Toque em um treino para editar ou segure para excluir.
         </Txt>
       ) : null}
     </View>

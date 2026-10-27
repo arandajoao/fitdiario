@@ -9,6 +9,17 @@ export const DEFAULT_MODS: Mod[] = [
   { name: 'Caminhada', icon: 'directions-walk', dist: true, fc: true },
   { name: 'Yoga', icon: 'self-improvement', dist: false, fc: false },
   { name: 'Funcional', icon: 'sports-gymnastics', dist: false, fc: true },
+  // v4: acrescentadas também em instalações existentes (ver migração em db.ts)
+  { name: 'Luta', icon: 'sports-mma', dist: false, fc: true },
+  { name: 'Crossfit', icon: 'mc:weight-lifter', dist: false, fc: true },
+  { name: 'HIIT', icon: 'timer', dist: false, fc: true },
+  { name: 'Pilates', icon: 'accessibility-new', dist: false, fc: false },
+  { name: 'Dança', icon: 'mc:dance-ballroom', dist: false, fc: true },
+  { name: 'Futebol', icon: 'sports-soccer', dist: true, fc: true },
+  { name: 'Vôlei', icon: 'sports-volleyball', dist: false, fc: true },
+  { name: 'Tênis', icon: 'sports-tennis', dist: false, fc: true },
+  { name: 'Trilha', icon: 'hiking', dist: true, fc: true },
+  { name: 'Remo', icon: 'rowing', dist: true, fc: true },
 ];
 
 export const DEFAULT_MEALS = ['Café da manhã', 'Lanche da manhã', 'Almoço', 'Café da tarde', 'Jantar'];

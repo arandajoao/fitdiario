@@ -2,13 +2,16 @@ export type Intensity = 'Leve' | 'Moderada' | 'Intensa';
 
 export type Mod = { name: string; icon: string; dist: boolean; fc: boolean };
 
+export type DistUnit = 'km' | 'm';
+
 export type Workout = {
   id: string;
   date: string; // AAAA-MM-DD
   mod: string;
   min: number;
   kcal: number;
-  dist: number | null;
+  dist: number | null; // sempre em km; `unit` é só a unidade de exibição/edição
+  unit: DistUnit;
   fc: number | null;
   int: Intensity;
   obs: string;

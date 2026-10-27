@@ -35,6 +35,10 @@ function useActions(setData: React.Dispatch<React.SetStateAction<Data>>) {
         await db.insertWorkout(w);
         setData((s) => ({ ...s, workouts: [w, ...s.workouts] }));
       },
+      async updateWorkout(w: Workout) {
+        await db.updateWorkout(w);
+        setData((s) => ({ ...s, workouts: s.workouts.map((x) => (x.id === w.id ? w : x)) }));
+      },
       async deleteWorkout(id: string) {
         await db.deleteWorkout(id);
         setData((s) => ({ ...s, workouts: s.workouts.filter((w) => w.id !== id) }));
