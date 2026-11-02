@@ -62,6 +62,7 @@ export const F = {
   regular: 'Satoshi-Regular',
   medium: 'Satoshi-Medium',
   bold: 'Satoshi-Bold',
+  black: 'Satoshi-Black', // só nos overlays de compartilhamento
 };
 
 const t = (fontFamily: string, fontSize: number, lineHeight: number): TextStyle => ({

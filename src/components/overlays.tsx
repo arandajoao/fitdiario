@@ -87,18 +87,18 @@ const t = (fontFamily: string, fontSize: number, color: string, extra?: TextStyl
   color,
   ...extra,
 });
-const label = (ink: string) => t(F.bold, 11, ink, { letterSpacing: 1.5, opacity: 0.8 });
+const label = (ink: string) => t(F.black, 11, ink, { letterSpacing: 1.5, opacity: 0.9 });
 const inline = (s: Stat) => s.value + (s.unit ? ' ' + s.unit : '');
 
 function Brand({ ink, style }: { ink: string; style?: TextStyle }) {
-  return <Text style={[t(F.bold, 11, ink, { letterSpacing: 2, opacity: 0.75 }), style]}>{APP_NAME.toUpperCase()}</Text>;
+  return <Text style={[t(F.black, 11, ink, { letterSpacing: 2, opacity: 0.85 }), style]}>{APP_NAME.toUpperCase()}</Text>;
 }
 
 function Value({ s, size, ink }: { s: Stat; size: number; ink: string }) {
   return (
-    <Text style={t(F.bold, size, ink)}>
+    <Text style={t(F.black, size, ink)}>
       {s.value}
-      {s.unit ? <Text style={t(F.medium, Math.round(size * 0.5), ink)}> {s.unit}</Text> : null}
+      {s.unit ? <Text style={t(F.bold, Math.round(size * 0.5), ink)}> {s.unit}</Text> : null}
     </Text>
   );
 }
@@ -110,7 +110,7 @@ function Days({ days, ink, size = 22 }: { days: NonNullable<ShareData['days']>; 
       {days.map((d, i) => (
         <View key={i} style={{ alignItems: 'center', gap: 4 }}>
           <View style={{ width: size, height: size, borderRadius: size / 2, borderWidth: 2, borderColor: ink, backgroundColor: d.on ? ink : 'transparent' }} />
-          <Text style={t(F.bold, 10, ink, { opacity: 0.8 })}>{d.label}</Text>
+          <Text style={t(F.black, 10, ink, { opacity: 0.9 })}>{d.label}</Text>
         </View>
       ))}
     </View>
@@ -121,7 +121,7 @@ function Days({ days, ink, size = 22 }: { days: NonNullable<ShareData['days']>; 
 function Coluna({ s, ink, brand }: P) {
   return (
     <View style={{ alignItems: 'center', gap: 12 }}>
-      <Text style={t(F.bold, 17, ink)}>{s.title}</Text>
+      <Text style={t(F.black, 17, ink)}>{s.title}</Text>
       {s.stats.slice(0, 3).map((x) => (
         <View key={x.label} style={{ alignItems: 'center' }}>
           <Text style={label(ink)}>{x.label.toUpperCase()}</Text>
@@ -139,10 +139,10 @@ function Linha({ s, ink, brand }: P) {
   return (
     <View style={{ width: 300, gap: 10 }}>
       <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 }}>
-        <Text style={[t(F.bold, 20, ink), { flexShrink: 1 }]} numberOfLines={1}>
+        <Text style={[t(F.black, 20, ink), { flexShrink: 1 }]} numberOfLines={1}>
           {s.title}
         </Text>
-        <Text style={t(F.medium, 13, ink, { opacity: 0.8 })}>{s.sub}</Text>
+        <Text style={t(F.bold, 13, ink, { opacity: 0.9 })}>{s.sub}</Text>
       </View>
       <View style={{ height: 2, borderRadius: 1, backgroundColor: ink }} />
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -164,12 +164,12 @@ function Destaque({ s, ink, brand }: P) {
   const [main, ...rest] = s.stats;
   return (
     <View style={{ alignItems: 'flex-start' }}>
-      <Text style={t(F.bold, 15, ink, { letterSpacing: 1, opacity: 0.85 })}>{(s.title + ' · ' + s.sub).toUpperCase()}</Text>
-      <Text style={t(F.bold, 92, ink, { lineHeight: 100, letterSpacing: -3 })}>
+      <Text style={t(F.black, 15, ink, { letterSpacing: 1, opacity: 0.9 })}>{(s.title + ' · ' + s.sub).toUpperCase()}</Text>
+      <Text style={t(F.black, 92, ink, { lineHeight: 100, letterSpacing: -3 })}>
         {main.value}
-        {main.unit ? <Text style={t(F.bold, 30, ink, { letterSpacing: 0 })}> {main.unit}</Text> : null}
+        {main.unit ? <Text style={t(F.black, 30, ink, { letterSpacing: 0 })}> {main.unit}</Text> : null}
       </Text>
-      {rest.length ? <Text style={t(F.medium, 16, ink)}>{rest.slice(0, 3).map(inline).join('   ')}</Text> : null}
+      {rest.length ? <Text style={t(F.bold, 16, ink)}>{rest.slice(0, 3).map(inline).join('   ')}</Text> : null}
       {s.days ? (
         <View style={{ marginTop: 12 }}>
           <Days days={s.days} ink={ink} size={18} />
@@ -187,7 +187,7 @@ function Selo({ s, ink, brand }: P) {
       <View style={{ width: 76, height: 76, borderRadius: 38, borderWidth: 3, borderColor: ink, alignItems: 'center', justifyContent: 'center' }}>
         <Icon name={s.icon} size={40} color={ink} />
       </View>
-      <Text style={t(F.bold, 22, ink)}>{s.title}</Text>
+      <Text style={t(F.black, 22, ink)}>{s.title}</Text>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         {s.stats.slice(0, 2).map((x, i) => (
           <React.Fragment key={x.label}>
@@ -211,10 +211,10 @@ function Cartao({ s, ink, brand }: P) {
           <Icon name={s.icon} size={24} color={ink} />
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={t(F.bold, 18, ink)} numberOfLines={1}>
+          <Text style={t(F.black, 18, ink)} numberOfLines={1}>
             {s.title}
           </Text>
-          <Text style={t(F.medium, 12, ink, { opacity: 0.8 })}>{s.sub}</Text>
+          <Text style={t(F.bold, 12, ink, { opacity: 0.9 })}>{s.sub}</Text>
         </View>
       </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 12 }}>
@@ -237,7 +237,7 @@ function Minimo({ s, ink, brand }: P) {
     <View style={{ alignItems: 'center', gap: 6 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Icon name={s.icon} size={22} color={ink} />
-        <Text style={t(F.bold, 18, ink)}>{[s.title, ...s.stats.slice(0, 2).map(inline)].join('  ·  ')}</Text>
+        <Text style={t(F.black, 18, ink)}>{[s.title, ...s.stats.slice(0, 2).map(inline)].join('  ·  ')}</Text>
       </View>
       {brand ? <Brand ink={ink} /> : null}
     </View>
