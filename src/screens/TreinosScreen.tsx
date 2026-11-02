@@ -18,11 +18,13 @@ export function TreinosScreen({
   setFlt,
   openFilters,
   editWorkout,
+  shareWorkout,
 }: {
   flt: Filter;
   setFlt: (f: Filter) => void;
   openFilters: () => void;
   editWorkout: (id: string) => void;
+  shareWorkout: (id: string) => void;
 }) {
   const { data, today, actions, toast } = useDiary();
   const icon = useModIcon();
@@ -143,6 +145,7 @@ export function TreinosScreen({
               icon={icon(w.mod)}
               showObs
               onPress={() => editWorkout(w.id)}
+              onShare={() => shareWorkout(w.id)}
               onLongPress={() =>
                 confirmDeleteWorkout(w, async () => {
                   await actions.deleteWorkout(w.id);

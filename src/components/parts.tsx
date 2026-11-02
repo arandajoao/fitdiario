@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Image, Pressable, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Path, Polyline, Rect, Stop, Text as SvgText } from 'react-native-svg';
 import { buildChart, CHART } from '../logic';
 import { intf, nf } from '../format';
 import { C, F, R } from '../theme';
 import { Workout } from '../types';
-import { card, Icon, Txt } from './ui';
+import { card, Icon, IconBtn, Txt } from './ui';
 
-export const distLabel = (w: Workout) => (w.dist ? (w.unit === 'm' ? intf(w.dist * 1000) + ' m' : nf(w.dist) + ' km') : null);
+export function ShareBtn({ onPress, color = C.onSurfaceVariant, style }: { onPress: () => void; color?: string; style?: StyleProp<ViewStyle> }) {
+  return <IconBtn icon="ios-share" size={36} iconSize={20} color={color} label="Compartilhar" onPress={onPress} style={style} />;
+}
+
+export const distLabel =(w: Workout) => (w.dist ? (w.unit === 'm' ? intf(w.dist * 1000) + ' m' : nf(w.dist) + ' km') : null);
 
 export const workoutMeta = (w: Workout) =>
-  [w.min + ' min', distLabel(w), w.fc ? Math.round(w.fc) + ' bpm' : null, w.int].filter(Boolean).join(' · ');
+  [w.min + ' min', distLabel(w), w.kcal > 0 ? Math.round(w.kcal) + ' kcal' : null, w.fc ? Math.round(w.fc) + ' bpm' : null, w.int].filter(Boolean).join(' · ');
 
 export function WorkoutCard({
   w,
@@ -18,32 +22,29 @@ export function WorkoutCard({
   showObs,
   onPress,
   onLongPress,
+  onShare,
 }: {
   w: Workout;
   icon: string;
   showObs?: boolean;
   onPress?: () => void;
   onLongPress?: () => void;
+  onShare?: () => void;
 }) {
   return (
     <Pressable
       onPress={onPress}
       onLongPress={onLongPress}
       delayLongPress={350}
-      style={({ pressed }) => [card, { flexDirection: 'row', gap: 14, padding: 14, alignItems: showObs ? 'flex-start' : 'center', opacity: pressed ? 0.85 : 1 }]}
+      style={({ pressed }) => [card, { flexDirection: 'row', gap: 14, padding: 14, alignItems: 'center', opacity: pressed ? 0.85 : 1 }]}
     >
       <View style={styles.modIcon}>
         <Icon name={icon} color={C.onPrimaryContainer} />
       </View>
       <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-          <Txt v="titleMedium" style={{ flex: 1 }} numberOfLines={1}>
-            {w.mod}
-          </Txt>
-          <Txt v="titleSmall" color={C.primary}>
-            {Math.round(w.kcal)} kcal
-          </Txt>
-        </View>
+        <Txt v="titleMedium" numberOfLines={1}>
+          {w.mod}
+        </Txt>
         <Txt v="bodySmall" color={C.onSurfaceVariant}>
           {workoutMeta(w)}
         </Txt>
@@ -53,6 +54,7 @@ export function WorkoutCard({
           </Txt>
         ) : null}
       </View>
+      {onShare ? <ShareBtn onPress={onShare} style={{ alignSelf: 'center', marginVertical: -6, marginRight: -6 }} /> : null}
     </Pressable>
   );
 }

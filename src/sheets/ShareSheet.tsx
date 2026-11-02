@@ -5,6 +5,7 @@ import { captureRef } from 'react-native-view-shot';
 import Svg, { Defs, Pattern, Rect } from 'react-native-svg';
 import { INKS, isDarkInk, TEMPLATES, weekShare, workoutShare } from '../components/overlays';
 import { Button, Chip, Label, Txt } from '../components/ui';
+import { weekStart } from '../format';
 import { shareFile } from '../media';
 import { useDiary, useModIcon } from '../store';
 import { C, R } from '../theme';
@@ -30,8 +31,8 @@ function Checker({ dark, width, height }: { dark: boolean; width: number; height
   );
 }
 
-/** Com `id` compartilha um treino; sem, o resumo da semana. */
-export function ShareSheet({ id, onClose }: { id?: string; onClose: () => void }) {
+/** Com `id` compartilha um treino; sem, o resumo da semana que começa em `week` (padrão: a atual). */
+export function ShareSheet({ id, week, onClose }: { id?: string; week?: string; onClose: () => void }) {
   const { data, today, toast } = useDiary();
   const icon = useModIcon();
   const [o, setO] = useState(last);
@@ -42,7 +43,7 @@ export function ShareSheet({ id, onClose }: { id?: string; onClose: () => void }
 
   const w = id ? data.workouts.find((x) => x.id === id) : undefined;
   if (id && !w) return null;
-  const s = w ? workoutShare(w, icon(w.mod)) : weekShare(data.workouts, today);
+  const s = w ? workoutShare(w, icon(w.mod)) : weekShare(data.workouts, week ?? weekStart(today));
 
   const ink = INKS[o.ink].color;
   const Tpl = TEMPLATES[o.tpl].C;

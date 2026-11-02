@@ -1,9 +1,9 @@
 import React from 'react';
-import { Alert, Linking, Pressable, useWindowDimensions, View } from 'react-native';
-import { EmptyBox, SectionHeader, WorkoutCard } from '../components/parts';
+import { Alert, FlatList, Linking, Pressable, useWindowDimensions, View } from 'react-native';
+import { distLabel, SectionHeader, ShareBtn } from '../components/parts';
 import { card, Grid, Icon, IconBtn, Txt } from '../components/ui';
 import { APP_NAME, PRIVACY_URL, ST } from '../constants';
-import { add, hm, intf, longLabel, nf, pd, relLabel, WD } from '../format';
+import { add, daysBetween, hm, intf, longLabel, nf, pd, short, WD, weekRange, weekStart } from '../format';
 import { streakInfo } from '../logic';
 import { dietOf, useDiary, useModIcon } from '../store';
 import { C, R } from '../theme';
@@ -22,23 +22,20 @@ export function HojeScreen({
   showBody,
   toggleBody,
   editWorkout,
+  shareWorkout,
   shareWeek,
 }: {
   go: (t: Tab) => void;
   showBody: boolean;
   toggleBody: () => void;
   editWorkout: (id: string) => void;
-  shareWeek: () => void;
+  shareWorkout: (id: string) => void;
+  shareWeek: (start: string) => void;
 }) {
   const { data, today, actions, toast } = useDiary();
   const icon = useModIcon();
-  // Círculo do check: quadrado exato (36px, ou menor em telas estreitas)
-  const { width: screenW } = useWindowDimensions();
-  const dot = Math.min(36, Math.floor((screenW - 40 - 40 - 6 * 6) / 7));
 
-  const todayW = data.workouts.filter((w) => w.date === today);
-  const week = data.workouts.filter((w) => w.date > add(today, -7));
-  const trained = new Set(data.workouts.map((w) => w.date));
+  const todayW = data.workouts.filter((w) => w.date === today).sort((a, b) => b.createdAt - a.createdAt);
   const recent = data.workouts
     .filter((w) => w.date < today)
     .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt)
@@ -47,7 +44,8 @@ export function HojeScreen({
   const lastF = [...data.body].reverse().find((b) => b.f != null)?.f ?? null;
   const td = dietOf(data, today);
   const si = streakInfo(data.diet, today);
-  const sum = (l: Workout[], k: 'min' | 'kcal' | 'dist') => l.reduce((a, w) => a + (w[k] || 0), 0);
+  const listed = [...todayW, ...recent];
+  const dayLabel = (d: string) => (d === today ? 'Hoje' : d === add(today, -1) ? 'Ontem' : short(d));
 
   const del = (w: Workout) =>
     confirmDeleteWorkout(w, async () => {
@@ -66,82 +64,11 @@ export function HojeScreen({
         </Txt>
       </View>
 
-      {/* Semana */}
-      <View style={{ borderRadius: R.lg, backgroundColor: C.primary, padding: 20, gap: 18 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 32, marginVertical: -4 }}>
-          <Txt v="titleSmall" color={C.onPrimary}>
-            Esta semana
-          </Txt>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <Txt v="labelMedium" color={C.primary90}>
-              {week.length} {week.length === 1 ? 'treino' : 'treinos'}
-            </Txt>
-            {week.length ? <IconBtn icon="ios-share" size={32} iconSize={20} color={C.onPrimary} bg="transparent" label="Compartilhar semana" onPress={shareWeek} style={{ marginRight: -6 }} /> : null}
-          </View>
-        </View>
-        <Grid cols={3}>
-          {[
-            [hm(sum(week, 'min')), 'tempo total'],
-            [intf(sum(week, 'kcal')), 'kcal'],
-            [nf(sum(week, 'dist')), 'km'],
-          ].map(([v, l]) => (
-            <View key={l}>
-              <Txt v="headlineMedium" color={C.onPrimary} numberOfLines={1} adjustsFontSizeToFit>
-                {v}
-              </Txt>
-              <Txt v="labelMedium" color={C.primary90}>
-                {l}
-              </Txt>
-            </View>
-          ))}
-        </Grid>
-        <Grid cols={7} gap={6}>
-          {Array.from({ length: 7 }, (_, i) => {
-            const d = add(today, i - 6);
-            const on = trained.has(d);
-            const isT = d === today;
-            return (
-              <View key={d} style={{ alignItems: 'center', gap: 6 }}>
-                <View
-                  style={{
-                    width: dot,
-                    height: dot,
-                    borderRadius: dot / 2,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: on ? C.primary90 : 'transparent',
-                    borderWidth: 1.5,
-                    borderColor: on ? C.primary90 : isT ? C.neutral100 : C.primary50,
-                  }}
-                >
-                  {on ? <Icon name="check" size={18} color={C.primary10} /> : null}
-                </View>
-                <Txt v="labelSmall" color={isT ? C.neutral100 : C.primary90}>
-                  {WD[pd(d).getDay()]}
-                </Txt>
-              </View>
-            );
-          })}
-        </Grid>
-      </View>
+      <WeekPager workouts={data.workouts} today={today} onShare={shareWeek} />
 
-      {/* Hoje */}
+      {/* Treinos: os de hoje e os 3 anteriores numa lista só */}
       <SectionHeader
-        title="Hoje"
-        right={
-          <Txt v="labelMedium" color={C.onSurfaceVariant}>
-            {Math.round(sum(todayW, 'min'))} min · {intf(sum(todayW, 'kcal'))} kcal
-          </Txt>
-        }
-      />
-      {todayW.map((w) => (
-        <WorkoutCard key={w.id} w={w} icon={icon(w.mod)} onPress={() => editWorkout(w.id)} onLongPress={() => del(w)} />
-      ))}
-      {todayW.length === 0 ? <EmptyBox>Nenhum treino hoje. Toque em + para registrar.</EmptyBox> : null}
-
-      {/* Recentes */}
-      <SectionHeader
-        title="Recentes"
+        title="Treinos"
         right={
           <Pressable onPress={() => go('Treinos')} hitSlop={8}>
             <Txt v="labelLarge" color={C.primary}>
@@ -151,38 +78,22 @@ export function HojeScreen({
         }
       />
       <View style={[card, { paddingVertical: 4, paddingHorizontal: 14 }]}>
-        {recent.length === 0 ? (
-          <Txt v="bodyMedium" color={C.onSurfaceVariant} style={{ paddingVertical: 10 }}>
-            Seus treinos anteriores aparecem aqui.
+        {listed.length === 0 ? (
+          <Txt v="bodyMedium" color={C.onSurfaceVariant} style={{ paddingVertical: 12 }}>
+            Nenhum treino ainda. Toque em + para registrar.
           </Txt>
         ) : null}
-        {recent.map((w, i) => (
-          <Pressable
+        {listed.map((w, i) => (
+          <WorkoutRow
             key={w.id}
+            w={w}
+            icon={icon(w.mod)}
+            sub={dayLabel(w.date) + ' · ' + brief(w)}
+            first={!i}
             onPress={() => editWorkout(w.id)}
             onLongPress={() => del(w)}
-            delayLongPress={350}
-            style={({ pressed }) => ({
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 12,
-              paddingVertical: 10,
-              borderTopWidth: i ? 1 : 0,
-              borderTopColor: C.outlineVariant,
-              opacity: pressed ? 0.6 : 1,
-            })}
-          >
-            <Icon name={icon(w.mod)} size={22} color={C.primary} />
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Txt v="titleSmall">{w.mod}</Txt>
-              <Txt v="bodySmall" color={C.onSurfaceVariant}>
-                {relLabel(w.date, today)}
-              </Txt>
-            </View>
-            <Txt v="labelMedium" color={C.onSurfaceVariant}>
-              {w.min} min · {Math.round(w.kcal)} kcal
-            </Txt>
-          </Pressable>
+            onShare={() => shareWorkout(w.id)}
+          />
         ))}
       </View>
 
@@ -252,6 +163,180 @@ export function HojeScreen({
           </Txt>
         </Pressable>
       </View>
+    </View>
+  );
+}
+
+/** "45 min · 5,2 km · 320 kcal" (kcal só quando houver) */
+const brief = (w: Workout) => [w.min + ' min', distLabel(w), w.kcal > 0 ? Math.round(w.kcal) + ' kcal' : null].filter(Boolean).join(' · ');
+
+function WorkoutRow({
+  w,
+  icon,
+  sub,
+  first,
+  onPress,
+  onLongPress,
+  onShare,
+}: {
+  w: Workout;
+  icon: string;
+  sub: string;
+  first: boolean;
+  onPress: () => void;
+  onLongPress: () => void;
+  onShare: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      onLongPress={onLongPress}
+      delayLongPress={350}
+      style={({ pressed }) => ({
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        paddingVertical: 14,
+        borderTopWidth: first ? 0 : 1,
+        borderTopColor: C.outlineVariant,
+        opacity: pressed ? 0.6 : 1,
+      })}
+    >
+      <View style={{ width: 40, height: 40, borderRadius: R.full, backgroundColor: C.primaryContainer, alignItems: 'center', justifyContent: 'center' }}>
+        <Icon name={icon} size={22} color={C.onPrimaryContainer} />
+      </View>
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Txt v="titleSmall" numberOfLines={1} style={{ fontSize: 15.5, lineHeight: 22 }}>
+          {w.mod}
+        </Txt>
+        <Txt v="bodySmall" color={C.onSurfaceVariant} numberOfLines={1} style={{ fontSize: 13.2, lineHeight: 18 }}>
+          {sub}
+        </Txt>
+      </View>
+      <ShareBtn onPress={onShare} style={{ marginRight: -8 }} />
+    </Pressable>
+  );
+}
+
+/**
+ * Resumo semanal (domingo a sábado). As páginas vão da semana atual para trás:
+ * arrastar para a direita mostra semanas anteriores; não há semanas futuras.
+ */
+function WeekPager({ workouts, today, onShare }: { workouts: Workout[]; today: string; onShare: (start: string) => void }) {
+  const { width: screenW } = useWindowDimensions();
+  const width = screenW - 40; // padding lateral da tela
+  const cur = weekStart(today);
+  const first = workouts.reduce((m, x) => (x.date < m ? x.date : m), today);
+  const total = Math.min(260, Math.floor(daysBetween(weekStart(first), cur) / 7) + 1);
+  const weeks = Array.from({ length: total }, (_, i) => add(cur, -7 * i));
+  return (
+    <View style={{ borderRadius: R.lg, backgroundColor: C.primary, overflow: 'hidden' }}>
+      <FlatList
+        data={weeks}
+        keyExtractor={(s) => s}
+        horizontal
+        inverted
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        getItemLayout={(_, i) => ({ length: width, offset: width * i, index: i })}
+        initialNumToRender={2}
+        windowSize={3}
+        extraData={workouts}
+        renderItem={({ item, index }) => (
+          <WeekPage start={item} hasOlder={index < total - 1} width={width} workouts={workouts} today={today} onShare={onShare} />
+        )}
+      />
+    </View>
+  );
+}
+
+function WeekPage({
+  start,
+  hasOlder,
+  width,
+  workouts,
+  today,
+  onShare,
+}: {
+  start: string;
+  hasOlder: boolean;
+  width: number;
+  workouts: Workout[];
+  today: string;
+  onShare: (start: string) => void;
+}) {
+  const end = add(start, 6);
+  const list = workouts.filter((w) => w.date >= start && w.date <= end);
+  const trained = new Set(list.map((w) => w.date));
+  const sum = (k: 'min' | 'kcal' | 'dist') => list.reduce((a, w) => a + (w[k] || 0), 0);
+  // Círculo do check: quadrado exato (36px, ou menor em telas estreitas)
+  const dot = Math.min(36, Math.floor((width - 40 - 6 * 6) / 7));
+  const otherYear = pd(end).getFullYear() !== pd(today).getFullYear();
+
+  return (
+    <View style={{ width, padding: 20, gap: 18 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, minHeight: 36 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, flexShrink: 1 }}>
+          {/* Indica que dá para arrastar para semanas anteriores */}
+          {hasOlder ? <Icon name="chevron-left" size={20} color={C.primary70} style={{ marginLeft: -6 }} /> : null}
+          <View style={{ flexShrink: 1 }}>
+            <Txt v="titleSmall" color={C.onPrimary} numberOfLines={1}>
+              {weekRange(start, otherYear)}
+            </Txt>
+          </View>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <Txt v="labelMedium" color={C.primary90}>
+            {list.length} {list.length === 1 ? 'treino' : 'treinos'}
+          </Txt>
+          {list.length ? <ShareBtn onPress={() => onShare(start)} color={C.onPrimary} style={{ marginRight: -8 }} /> : null}
+        </View>
+      </View>
+      <Grid cols={3}>
+        {[
+          [hm(sum('min')), 'tempo total'],
+          [intf(sum('kcal')), 'kcal'],
+          [nf(sum('dist')), 'km'],
+        ].map(([v, l]) => (
+          <View key={l}>
+            <Txt v="headlineMedium" color={C.onPrimary} numberOfLines={1} adjustsFontSizeToFit>
+              {v}
+            </Txt>
+            <Txt v="labelMedium" color={C.primary90}>
+              {l}
+            </Txt>
+          </View>
+        ))}
+      </Grid>
+      <Grid cols={7} gap={6}>
+        {Array.from({ length: 7 }, (_, i) => {
+          const d = add(start, i);
+          const on = trained.has(d);
+          const isT = d === today;
+          const future = d > today;
+          return (
+            <View key={d} style={{ alignItems: 'center', gap: 6, opacity: future ? 0.45 : 1 }}>
+              <View
+                style={{
+                  width: dot,
+                  height: dot,
+                  borderRadius: dot / 2,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: on ? C.primary90 : 'transparent',
+                  borderWidth: 1.5,
+                  borderColor: on ? C.primary90 : isT ? C.neutral100 : C.primary50,
+                }}
+              >
+                {on ? <Icon name="check" size={18} color={C.primary10} /> : null}
+              </View>
+              <Txt v="labelSmall" color={isT ? C.neutral100 : C.primary90}>
+                {WD[pd(d).getDay()]}
+              </Txt>
+            </View>
+          );
+        })}
+      </Grid>
     </View>
   );
 }

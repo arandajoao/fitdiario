@@ -27,7 +27,7 @@ import { ExportOptions, Filter, HealthType, Tab } from './src/types';
 
 type SheetState =
   | { type: 'treino'; id?: string }
-  | { type: 'share'; id?: string }
+  | { type: 'share'; id?: string; week?: string }
   | { type: 'registro'; kind: RegKind }
   | { type: 'meals' }
   | { type: 'filtros' }
@@ -98,6 +98,7 @@ function Main() {
   };
   const close = () => setSheet(null);
   const editWorkout = (id: string) => open({ type: 'treino', id });
+  const shareWorkout = (id: string) => open({ type: 'share', id });
   const go = (t: Tab) => {
     setTab(t);
     setCompare({ mode: false, sel: [] });
@@ -116,8 +117,8 @@ function Main() {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
       >
-        {tab === 'Hoje' ? <HojeScreen go={go} showBody={showBody} toggleBody={() => setShowBody(!showBody)} editWorkout={editWorkout} shareWeek={() => open({ type: 'share' })} /> : null}
-        {tab === 'Treinos' ? <TreinosScreen flt={flt} setFlt={setFlt} openFilters={() => open({ type: 'filtros' })} editWorkout={editWorkout} /> : null}
+        {tab === 'Hoje' ? <HojeScreen go={go} showBody={showBody} toggleBody={() => setShowBody(!showBody)} editWorkout={editWorkout} shareWorkout={shareWorkout} shareWeek={(week) => open({ type: 'share', week })} /> : null}
+        {tab === 'Treinos' ? <TreinosScreen flt={flt} setFlt={setFlt} openFilters={() => open({ type: 'filtros' })} editWorkout={editWorkout} shareWorkout={shareWorkout} /> : null}
         {tab === 'Corpo' ? (
           <CorpoScreen
             metric={metric}
@@ -180,8 +181,8 @@ function Main() {
       <Sheet visible={!!sheet} onClose={close} scrollEnabled={sheetScroll}>
         {shown ? (
           <React.Fragment key={sheetKey.current}>
-            {shown.type === 'treino' ? <TreinoSheet id={shown.id} onClose={close} onShare={(id) => open({ type: 'share', id })} /> : null}
-            {shown.type === 'share' ? <ShareSheet id={shown.id} onClose={close} /> : null}
+            {shown.type === 'treino' ? <TreinoSheet id={shown.id} onClose={close} onShare={shareWorkout} /> : null}
+            {shown.type === 'share' ? <ShareSheet id={shown.id} week={shown.week} onClose={close} /> : null}
             {shown.type === 'registro' ? <RegistroSheet initialKind={shown.kind} onClose={close} /> : null}
             {shown.type === 'meals' ? <MealsSheet onClose={close} onDragging={(d) => setSheetScroll(!d)} /> : null}
             {shown.type === 'filtros' ? <FiltrosSheet initial={flt} onApply={setFlt} onClose={close} /> : null}

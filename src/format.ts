@@ -26,7 +26,17 @@ export const longLabel = (s: string) => {
   const x = pd(s);
   return WDL[x.getDay()] + ', ' + x.getDate() + ' de ' + MONTHS_L[x.getMonth()];
 };
-export const daysBetween = (a: string, b: string) => Math.round((pd(b).getTime() - pd(a).getTime()) / 864e5);
+/** Domingo da semana de `s` (semanas vão de domingo a sábado). */
+export const weekStart = (s: string) => add(s, -pd(s).getDay());
+/** "1 – 7 nov" ou "26 out – 1 nov"; com `year`, acrescenta o ano. */
+export const weekRange = (start: string, year = false) => {
+  const end = add(start, 6);
+  const a = pd(start);
+  const b = pd(end);
+  const r = (a.getMonth() === b.getMonth() ? String(a.getDate()) : short(start)) + ' – ' + short(end);
+  return year ? r + ' ' + b.getFullYear() : r;
+};
+export const daysBetween =(a: string, b: string) => Math.round((pd(b).getTime() - pd(a).getTime()) / 864e5);
 export const relLabel = (d: string, today: string) =>
   d === today ? 'Hoje' : d === add(today, -1) ? 'Ontem' : longLabel(d);
 

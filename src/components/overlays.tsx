@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, TextStyle, View } from 'react-native';
 import { APP_NAME } from '../constants';
-import { add, hm, intf, nf, pd, short, WD } from '../format';
+import { add, hm, intf, nf, pd, short, WD, weekRange } from '../format';
 import { F } from '../theme';
 import { Workout } from '../types';
 import { Icon } from './ui';
@@ -44,10 +44,10 @@ export function workoutShare(w: Workout, icon: string): ShareData {
   return { title: w.mod, sub: short(w.date), icon, stats };
 }
 
-/** Resumo dos últimos 7 dias (o mesmo recorte do card "Esta semana"). */
-export function weekShare(workouts: Workout[], today: string): ShareData {
-  const from = add(today, -6);
-  const week = workouts.filter((w) => w.date >= from && w.date <= today);
+/** Resumo de uma semana de domingo (`start`) a sábado, como no card da tela Hoje. */
+export function weekShare(workouts: Workout[], start: string): ShareData {
+  const end = add(start, 6);
+  const week = workouts.filter((w) => w.date >= start && w.date <= end);
   const trained = new Set(week.map((w) => w.date));
   const sum = (k: 'min' | 'kcal' | 'dist') => week.reduce((a, w) => a + (w[k] || 0), 0);
   const stats: Stat[] = [{ label: 'Treinos', value: String(week.length), unit: week.length === 1 ? 'treino' : 'treinos' }, timeStat(sum('min'))];
@@ -55,11 +55,11 @@ export function weekShare(workouts: Workout[], today: string): ShareData {
   if (sum('kcal')) stats.push({ label: 'Calorias', value: intf(sum('kcal')), unit: 'kcal' });
   return {
     title: 'Minha semana',
-    sub: short(from) + ' – ' + short(today),
+    sub: weekRange(start),
     icon: 'calendar-month',
     stats,
     days: Array.from({ length: 7 }, (_, i) => {
-      const d = add(today, i - 6);
+      const d = add(start, i);
       return { label: WD[pd(d).getDay()], on: trained.has(d) };
     }),
   };
